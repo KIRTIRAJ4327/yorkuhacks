@@ -1,16 +1,55 @@
-# safe_path_york
+# SafePath York
 
-A new Flutter project.
+Walking safety app for York Region. Get three route options with safety scores based on real crime data, street lighting, and nearby safe spaces.
 
-## Getting Started
+Built for YorkUHacks.
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- Three route options: fastest, balanced, and safest
+- Safety scores (0-100) based on crime data, lighting, and safe spaces
+- Turn-by-turn navigation with safety alerts
+- Chat with AI about area safety
+- SOS emergency button
+- Dark theme optimized for night use
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Setup
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+git clone https://github.com/KIRTIRAJ4327/yorkuhacks.git
+cd yorkuhacks
+flutter pub get
+flutter run -d chrome
+```
+
+Optional: Add `--dart-define=GEMINI_API_KEY=your_key` to enable AI features. Get a free key at https://aistudio.google.com/apikey
+
+## Tech Stack
+
+Flutter, Riverpod, flutter_map (OpenStreetMap), OSRM routing, Gemini AI, York Region ArcGIS data, Hive for caching.
+
+## How Safety Scoring Works
+
+Routes get a 0-100 score based on:
+- Crime density (40%)
+- Street lighting (25%)
+- Traffic collisions (15%)
+- Distance to safe spaces (10%)
+- Sidewalk infrastructure (10%)
+
+Data from York Regional Police, York Region Open Data, and OpenStreetMap.
+
+## Team
+
+- Kirti ([@KIRTIRAJ4327](https://github.com/KIRTIRAJ4327))
+- DJ
+- Yeshi
+- Tarun
+
+## License
+
+MIT
+
+---
+
+Made with ❤️ for York Region
