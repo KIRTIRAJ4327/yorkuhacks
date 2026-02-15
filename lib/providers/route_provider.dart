@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import '../core/constants.dart';
 import '../data/local/cache_service.dart';
 import '../data/models/route_data.dart';
 import '../data/repositories/crime_repository.dart';
+import '../data/repositories/google_places_repository.dart';
 import '../data/repositories/lighting_repository.dart';
 import '../data/repositories/route_repository.dart';
 import '../data/repositories/safe_spaces_repository.dart';
@@ -118,12 +120,25 @@ final geminiServiceProvider = Provider<GeminiService>((ref) {
   return gemini;
 });
 
+// Auto-switch between Google Places (with API key) and Overpass (fallback)
+final safeSpacesRepoProvider = Provider<dynamic>((ref) {
+  final googleKey = AppConstants.googlePlacesApiKey;
+
+  if (googleKey.isNotEmpty) {
+    // Use Google Places for real-time opening hours
+    return GooglePlacesSafeSpacesRepository(apiKey: googleKey);
+  } else {
+    // Fallback to Overpass for demo without API key
+    return SafeSpacesRepository();
+  }
+});
+
 final routeServiceProvider = Provider<RouteService>((ref) {
   return RouteService(
     routeRepo: RouteRepository(),
     crimeRepo: CrimeRepository(),
     lightingRepo: LightingRepository(),
-    safeSpacesRepo: SafeSpacesRepository(),
+    safeSpacesRepo: ref.watch(safeSpacesRepoProvider),
     scorer: SafetyScorer(),
     gemini: ref.watch(geminiServiceProvider),
   );

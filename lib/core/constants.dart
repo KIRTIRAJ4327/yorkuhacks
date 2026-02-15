@@ -53,6 +53,10 @@ Keep responses concise (2-3 sentences max for route summaries).
 For chat questions, provide helpful neighborhood safety insights.
 ''';
 
+  // === Google Places API ===
+  static const String googlePlacesApiKey =
+      String.fromEnvironment('GOOGLE_PLACES_API_KEY', defaultValue: '');
+
   // === Nominatim ===
   static const String nominatimUserAgent = 'SafePathYork/1.0';
 

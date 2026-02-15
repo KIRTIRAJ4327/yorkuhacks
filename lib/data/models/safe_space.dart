@@ -1,9 +1,79 @@
 import 'package:latlong2/latlong.dart';
 
+/// Opening hours data from Google Places API
+class OpeningHours {
+  final bool isOpen24h;
+  final bool isOpenNow;
+  final List<Period> periods;
+  final List<String> weekdayText;
+
+  const OpeningHours({
+    this.isOpen24h = false,
+    this.isOpenNow = false,
+    this.periods = const [],
+    this.weekdayText = const [],
+  });
+
+  factory OpeningHours.fromGooglePlaces(Map<String, dynamic> json) {
+    final periods = (json['periods'] as List?)
+            ?.map((p) => Period.fromJson(p as Map<String, dynamic>))
+            .toList() ??
+        [];
+    final weekdayText =
+        (json['weekdayDescriptions'] as List?)?.cast<String>() ?? [];
+
+    // Check if open 24/7 (all days, 0000-2359 or no close time)
+    final isOpen24h = periods.length == 7 &&
+        periods.every((p) =>
+            p.open.time == '0000' &&
+            (p.close == null || p.close!.time == '2359'));
+
+    return OpeningHours(
+      isOpen24h: isOpen24h,
+      isOpenNow: json['openNow'] as bool? ?? false,
+      periods: periods,
+      weekdayText: weekdayText,
+    );
+  }
+}
+
+/// Period representing opening/closing times for a day
+class Period {
+  final TimeOfDay open;
+  final TimeOfDay? close;
+
+  const Period({required this.open, this.close});
+
+  factory Period.fromJson(Map<String, dynamic> json) {
+    return Period(
+      open: TimeOfDay.fromJson(json['open'] as Map<String, dynamic>),
+      close: json['close'] != null
+          ? TimeOfDay.fromJson(json['close'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+}
+
+/// Time of day in Google Places format
+class TimeOfDay {
+  final int day; // 0-6 (Sunday-Saturday)
+  final String time; // "0930" format
+
+  const TimeOfDay({required this.day, required this.time});
+
+  factory TimeOfDay.fromJson(Map<String, dynamic> json) {
+    return TimeOfDay(
+      day: json['day'] as int,
+      time: json['time'] as String,
+    );
+  }
+}
+
 enum SafeSpaceType {
   police,
   hospital,
   fireStation,
+  pharmacy,
   transitStop,
   other;
 
@@ -15,6 +85,8 @@ enum SafeSpaceType {
         return 'Hospital';
       case fireStation:
         return 'Fire Station';
+      case pharmacy:
+        return 'Pharmacy';
       case transitStop:
         return 'Transit Stop';
       case other:
@@ -30,6 +102,8 @@ enum SafeSpaceType {
         return '\u{1F3E5}';
       case fireStation:
         return '\u{1F692}';
+      case pharmacy:
+        return '\u{1F48A}';
       case transitStop:
         return '\u{1F68F}';
       case other:
@@ -46,6 +120,7 @@ class SafeSpace {
   final String? address;
   final String? phone;
   final bool isOpen24h;
+  final OpeningHours? openingHours;
 
   const SafeSpace({
     required this.id,
@@ -55,7 +130,15 @@ class SafeSpace {
     this.address,
     this.phone,
     this.isOpen24h = false,
+    this.openingHours,
   });
+
+  /// Check if this safe space is accessible at the given time
+  bool isAccessibleAt(DateTime time) {
+    if (isOpen24h) return true;
+    if (openingHours?.isOpenNow ?? false) return true;
+    return false;
+  }
 
   factory SafeSpace.fromOverpass(Map<String, dynamic> json) {
     final tags = json['tags'] as Map<String, dynamic>? ?? {};
@@ -84,6 +167,41 @@ class SafeSpace {
       address: tags['addr:street']?.toString(),
       phone: tags['phone']?.toString(),
       isOpen24h: tags['opening_hours'] == '24/7',
+    );
+  }
+
+  /// Create SafeSpace from Google Places API response
+  factory SafeSpace.fromGooglePlaces(Map<String, dynamic> json) {
+    final types = (json['types'] as List?)?.cast<String>() ?? [];
+    final location = json['location'] as Map<String, dynamic>;
+    final openingHours = json['regularOpeningHours'] != null
+        ? OpeningHours.fromGooglePlaces(
+            json['regularOpeningHours'] as Map<String, dynamic>)
+        : null;
+
+    SafeSpaceType type = SafeSpaceType.other;
+    if (types.contains('police')) {
+      type = SafeSpaceType.police;
+    } else if (types.contains('hospital')) {
+      type = SafeSpaceType.hospital;
+    } else if (types.contains('fire_station')) {
+      type = SafeSpaceType.fireStation;
+    } else if (types.contains('pharmacy')) {
+      type = SafeSpaceType.pharmacy;
+    }
+
+    return SafeSpace(
+      id: json['id'] as String,
+      name: json['displayName']?['text'] as String? ?? type.label,
+      location: LatLng(
+        location['latitude'] as double,
+        location['longitude'] as double,
+      ),
+      type: type,
+      address: json['formattedAddress'] as String?,
+      phone: json['internationalPhoneNumber'] as String?,
+      isOpen24h: openingHours?.isOpen24h ?? false,
+      openingHours: openingHours,
     );
   }
 

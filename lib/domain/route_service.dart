@@ -5,9 +5,9 @@ import '../data/models/route_data.dart';
 import '../data/models/safe_space.dart';
 import '../data/models/street_light.dart';
 import '../data/repositories/crime_repository.dart';
+import '../data/repositories/google_places_repository.dart';
 import '../data/repositories/lighting_repository.dart';
 import '../data/repositories/route_repository.dart';
-import '../data/repositories/safe_spaces_repository.dart';
 import 'gemini_service.dart';
 import 'safety_scorer.dart';
 
@@ -16,7 +16,7 @@ class RouteService {
   final RouteRepository _routeRepo;
   final CrimeRepository _crimeRepo;
   final LightingRepository _lightingRepo;
-  final SafeSpacesRepository _safeSpacesRepo;
+  final dynamic _safeSpacesRepo; // Can be GooglePlaces OR Overpass
   final SafetyScorer _scorer;
   final GeminiService _gemini;
 
@@ -24,7 +24,7 @@ class RouteService {
     required RouteRepository routeRepo,
     required CrimeRepository crimeRepo,
     required LightingRepository lightingRepo,
-    required SafeSpacesRepository safeSpacesRepo,
+    required dynamic safeSpacesRepo,
     required SafetyScorer scorer,
     required GeminiService gemini,
   })  : _routeRepo = routeRepo,
@@ -49,10 +49,24 @@ class RouteService {
     final bbox = GeoUtils.boundingBox(allPoints, paddingDegrees: 0.01);
 
     // 3. Fetch safety data in parallel
-    final results = await Future.wait([
+    final Future<List<SafeSpace>> safeSpacesFuture =
+        _safeSpacesRepo is GooglePlacesSafeSpacesRepository
+            ? _safeSpacesRepo.getSafeSpaces(
+                center: LatLng(
+                  (bbox.sw.latitude + bbox.ne.latitude) / 2,
+                  (bbox.sw.longitude + bbox.ne.longitude) / 2,
+                ),
+                radiusMeters: 2000,
+              )
+            : _safeSpacesRepo.getSafeSpaces(
+                southWest: bbox.sw,
+                northEast: bbox.ne,
+              );
+
+    final results = await Future.wait<dynamic>([
       _crimeRepo.getCrimesInArea(southWest: bbox.sw, northEast: bbox.ne),
       _lightingRepo.getLightsInArea(southWest: bbox.sw, northEast: bbox.ne),
-      _safeSpacesRepo.getSafeSpaces(southWest: bbox.sw, northEast: bbox.ne),
+      safeSpacesFuture,
     ]);
 
     final crimes = results[0] as List<CrimeIncident>;

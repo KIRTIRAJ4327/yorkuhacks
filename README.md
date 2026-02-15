@@ -13,7 +13,20 @@ flutter pub get
 flutter run -d chrome
 ```
 
-Optional: Add `--dart-define=GEMINI_API_KEY=your_key` to enable AI features. Get a free key at https://aistudio.google.com/apikey
+### Optional: Enable AI Features
+
+Add API keys for enhanced functionality:
+
+```bash
+flutter run -d chrome \
+  --dart-define=GEMINI_API_KEY=your_gemini_key \
+  --dart-define=GOOGLE_PLACES_API_KEY=your_places_key
+```
+
+- **Gemini API**: AI route summaries and safety chat. Get free key at https://aistudio.google.com/apikey
+- **Google Places API**: Real-time safe spaces with opening hours (24/7 or currently open). Get key at https://console.cloud.google.com/
+
+Without API keys, the app uses fallback sample data for demonstration.
 
 ## Features
 
@@ -119,7 +132,10 @@ Can also go to: AI Chat (safety questions) from Home screen.
 - **Geocoding**: Nominatim (OpenStreetMap)
 - **Crime Data**: York Region ArcGIS + sample data (API endpoints need discovery)
 - **Street Lighting**: York Region Open Data + sample data
-- **Safe Spaces**: OpenStreetMap Overpass API (police, hospitals, fire stations)
+- **Safe Spaces**: Google Places API (police, hospitals, fire stations, 24/7 pharmacies)
+  - Real-time opening hours — only shows places that are 24/7 or currently open
+  - Phone numbers for emergency calls
+  - Falls back to sample data if no API key provided
 
 ## Safety Scoring Breakdown
 
