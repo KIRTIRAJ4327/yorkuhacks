@@ -15,10 +15,22 @@ class OpeningHours {
   });
 
   factory OpeningHours.fromGooglePlaces(Map<String, dynamic> json) {
-    final periods = (json['periods'] as List?)
-            ?.map((p) => Period.fromJson(p as Map<String, dynamic>))
-            .toList() ??
-        [];
+    // Safely parse periods - Google Places often returns malformed data
+    final List<Period> periods = [];
+    final periodsList = json['periods'];
+    if (periodsList is List) {
+      for (final p in periodsList) {
+        try {
+          if (p is Map<String, dynamic>) {
+            periods.add(Period.fromJson(p));
+          }
+        } catch (e) {
+          // Skip malformed periods silently
+          continue;
+        }
+      }
+    }
+
     final weekdayText =
         (json['weekdayDescriptions'] as List?)?.cast<String>() ?? [];
 
@@ -45,12 +57,23 @@ class Period {
   const Period({required this.open, this.close});
 
   factory Period.fromJson(Map<String, dynamic> json) {
-    return Period(
-      open: TimeOfDay.fromJson(json['open'] as Map<String, dynamic>),
-      close: json['close'] != null
-          ? TimeOfDay.fromJson(json['close'] as Map<String, dynamic>)
-          : null,
-    );
+    try {
+      final openData = json['open'];
+      final closeData = json['close'];
+
+      if (openData == null) {
+        throw FormatException('Missing open time in period');
+      }
+
+      return Period(
+        open: TimeOfDay.fromJson(openData as Map<String, dynamic>),
+        close: closeData != null
+            ? TimeOfDay.fromJson(closeData as Map<String, dynamic>)
+            : null,
+      );
+    } catch (e) {
+      throw FormatException('Failed to parse Period: $e');
+    }
   }
 }
 
@@ -62,10 +85,21 @@ class TimeOfDay {
   const TimeOfDay({required this.day, required this.time});
 
   factory TimeOfDay.fromJson(Map<String, dynamic> json) {
-    return TimeOfDay(
-      day: json['day'] as int,
-      time: json['time'] as String,
-    );
+    try {
+      final day = json['day'];
+      final time = json['time'];
+
+      if (day == null || time == null) {
+        throw FormatException('Missing day or time in TimeOfDay');
+      }
+
+      return TimeOfDay(
+        day: day is int ? day : int.parse(day.toString()),
+        time: time.toString(),
+      );
+    } catch (e) {
+      throw FormatException('Failed to parse TimeOfDay: $e');
+    }
   }
 }
 
