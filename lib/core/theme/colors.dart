@@ -31,6 +31,11 @@ class AppColors {
   static const Color safeAccent = Color(0xFF34D399);
   static const Color alertAccent = Color(0xFFFCD34D);
   static const Color dangerAccent = Color(0xFFFB7185);
+  
+  // === Semantic Colors ===
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color danger = Color(0xFFEF4444);
 
   // === Light Theme ===
   static const Color lightBackground = Color(0xFFF8FAFC);

@@ -21,7 +21,7 @@ class RouteRepository {
         '${AppConstants.osrmBaseUrl}/route/v1/foot/'
         '${origin.longitude},${origin.latitude};'
         '${destination.longitude},${destination.latitude}'
-        '?alternatives=3&overview=full&geometries=geojson&steps=true';
+        '?alternatives=true&overview=full&geometries=geojson&steps=true';
 
     final response = await _dio.get(url);
     final data = response.data as Map<String, dynamic>;
@@ -54,6 +54,56 @@ class RouteRepository {
         type: RouteType.fastest, // Will be assigned by RouteService
       );
     }).toList();
+  }
+
+  /// Get a single walking route via an intermediate waypoint
+  /// Uses 3-coordinate OSRM URL: origin → waypoint → destination
+  Future<RouteData?> getRouteViaWaypoint({
+    required LatLng origin,
+    required LatLng waypoint,
+    required LatLng destination,
+    required String routeId,
+  }) async {
+    try {
+      final url =
+          '${AppConstants.osrmBaseUrl}/route/v1/foot/'
+          '${origin.longitude},${origin.latitude};'
+          '${waypoint.longitude},${waypoint.latitude};'
+          '${destination.longitude},${destination.latitude}'
+          '?overview=full&geometries=geojson&steps=true';
+
+      final response = await _dio.get(url);
+      final data = response.data as Map<String, dynamic>;
+
+      if (data['code'] != 'Ok') return null;
+
+      final routes = data['routes'] as List;
+      if (routes.isEmpty) return null;
+
+      final route = routes[0] as Map<String, dynamic>;
+      final geometry = route['geometry'] as Map<String, dynamic>;
+      final coordinates = geometry['coordinates'] as List;
+
+      final points = coordinates.map<LatLng>((coord) {
+        final c = coord as List;
+        return LatLng(
+          (c[1] as num).toDouble(),
+          (c[0] as num).toDouble(),
+        );
+      }).toList();
+
+      return RouteData(
+        id: routeId,
+        points: points,
+        distanceMeters: (route['distance'] as num).toDouble(),
+        durationSeconds: (route['duration'] as num).toInt(),
+        safetyScore: 0,
+        type: RouteType.fastest,
+      );
+    } catch (e) {
+      print('RouteRepository: Waypoint route failed: $e');
+      return null;
+    }
   }
 
   /// Geocode an address to coordinates using Nominatim

@@ -35,6 +35,8 @@ out body;
 ''';
 
     try {
+      print('SafeSpacesRepository: Fetching safe spaces from ${AppConstants.overpassBaseUrl}');
+
       final response = await _dio.post(
         AppConstants.overpassBaseUrl,
         data: 'data=$query',
@@ -46,11 +48,15 @@ out body;
       final data = response.data as Map<String, dynamic>;
       final elements = data['elements'] as List? ?? [];
 
-      return elements
+      final spaces = elements
           .map((e) => SafeSpace.fromOverpass(e as Map<String, dynamic>))
           .toList();
-    } catch (_) {
+      print('SafeSpacesRepository: Success - fetched ${spaces.length} safe spaces from OSM');
+      return spaces;
+    } catch (e) {
       // Fallback sample data for York Region
+      print('SafeSpacesRepository: Failed to fetch Overpass data: $e');
+      print('SafeSpacesRepository: Using sample safe spaces');
       return _sampleSafeSpaces(southWest, northEast);
     }
   }

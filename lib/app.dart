@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/screens/arrival_screen.dart';
+import 'presentation/screens/emergency_screen.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/navigation_screen.dart';
 import 'presentation/screens/route_selection_screen.dart';
@@ -28,6 +29,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/navigate',
       builder: (context, state) => const NavigationScreen(),
+    ),
+    GoRoute(
+      path: '/emergency',
+      builder: (context, state) => const EmergencyScreen(),
     ),
     GoRoute(
       path: '/chat',

@@ -89,6 +89,7 @@ class RouteData {
   });
 
   RouteData copyWith({
+    String? id,
     double? safetyScore,
     RouteType? type,
     String? aiSummary,
@@ -100,7 +101,7 @@ class RouteData {
     bool? hasSidewalk,
   }) {
     return RouteData(
-      id: id,
+      id: id ?? this.id,
       points: points,
       segments: segments ?? this.segments,
       distanceMeters: distanceMeters,

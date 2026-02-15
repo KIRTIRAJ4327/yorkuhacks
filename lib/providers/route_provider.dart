@@ -3,9 +3,11 @@ import 'package:latlong2/latlong.dart';
 import '../core/constants.dart';
 import '../data/local/cache_service.dart';
 import '../data/models/route_data.dart';
+import '../data/repositories/collision_repository.dart';
 import '../data/repositories/crime_repository.dart';
 import '../data/repositories/google_places_repository.dart';
-import '../data/repositories/lighting_repository.dart';
+import '../data/repositories/infrastructure_repository.dart';
+import '../data/repositories/osm_lighting_repository.dart';
 import '../data/repositories/route_repository.dart';
 import '../data/repositories/safe_spaces_repository.dart';
 import '../domain/gemini_service.dart';
@@ -137,7 +139,9 @@ final routeServiceProvider = Provider<RouteService>((ref) {
   return RouteService(
     routeRepo: RouteRepository(),
     crimeRepo: CrimeRepository(),
-    lightingRepo: LightingRepository(),
+    lightingRepo: OsmLightingRepository(), // Real OSM lighting data!
+    collisionRepo: CollisionRepository(),
+    infraRepo: InfrastructureRepository(), // Real OSM sidewalk data!
     safeSpacesRepo: ref.watch(safeSpacesRepoProvider),
     scorer: SafetyScorer(),
     gemini: ref.watch(geminiServiceProvider),

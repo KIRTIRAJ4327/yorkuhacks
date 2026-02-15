@@ -10,6 +10,8 @@ class AppConstants {
       'https://overpass-api.de/api/interpreter';
   static const String arcgisBaseUrl =
       'https://services1.arcgis.com/GzvOwaQBbX7KLiuG/ArcGIS/rest/services';
+  static const String yorkMapsBaseUrl =
+      'https://ww8.yorkmaps.ca/arcgis/rest/services/OpenData';
   static const String yorkOpenDataUrl =
       'https://data.yorkopendata.org';
 

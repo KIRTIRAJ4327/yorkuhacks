@@ -6,14 +6,20 @@ import '../../core/constants.dart';
 class CacheService {
   static const String _boxName = 'safepath_cache';
   late Box<String> _box;
+  bool _initialized = false;
 
   Future<void> init() async {
+    if (_initialized) return;
     await Hive.initFlutter();
     _box = await Hive.openBox<String>(_boxName);
+    _initialized = true;
   }
+
+  bool get isInitialized => _initialized;
 
   /// Store a value with optional expiry
   Future<void> put(String key, dynamic value) async {
+    if (!_initialized) return; // Guard against uninitialized access
     final entry = {
       'data': value,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
@@ -23,6 +29,7 @@ class CacheService {
 
   /// Get a cached value, returns null if expired or missing
   T? get<T>(String key) {
+    if (!_initialized) return null; // Guard against uninitialized access
     final raw = _box.get(key);
     if (raw == null) return null;
 

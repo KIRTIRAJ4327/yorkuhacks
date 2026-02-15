@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:latlong2/latlong.dart';
 import '../core/constants.dart';
 import '../core/utils/geo_utils.dart';
+import '../data/models/collision.dart';
 import '../data/models/crime_incident.dart';
 import '../data/models/route_data.dart';
 import '../data/models/safe_space.dart';
@@ -16,8 +17,8 @@ class SafetyScorer {
     required List<CrimeIncident> crimes,
     required List<StreetLight> lights,
     required List<SafeSpace> safeSpaces,
-    int collisionsNearby = 0,
-    bool hasSidewalk = true,
+    required List<Collision> collisions,
+    double infrastructureScore = 70.0, // 0-100 score from OSM sidewalk data
   }) {
     // 1. Crime score (40%) — fewer crimes = higher score
     final crimesInBuffer = _countCrimesNearRoute(
@@ -32,7 +33,12 @@ class SafetyScorer {
     // 2. Lighting score (25%) — more lights = higher score
     final lightingScore = _calculateLightingCoverage(routePoints, lights);
 
-    // 3. Collision score (15%) — fewer = higher
+    // 3. Collision score (15%) — fewer = higher (REAL DATA from York Region)
+    final collisionsNearby = _countCollisionsNearRoute(
+      routePoints,
+      collisions,
+      AppConstants.routeBufferMeters,
+    );
     final collisionScore = (100 -
             (collisionsNearby / AppConstants.maxExpectedCollisions * 100))
         .clamp(0.0, 100.0);
@@ -45,8 +51,8 @@ class SafetyScorer {
     );
     final safeSpaceScore = min(safeSpaceCount * 20.0, 100.0);
 
-    // 5. Infrastructure score (10%)
-    final infraScore = (hasSidewalk ? 70.0 : 30.0) + 30.0; // Simplified
+    // 5. Infrastructure score (10%) — REAL OSM sidewalk data
+    final infraScore = infrastructureScore;
 
     // Weighted sum
     final overall = (crimeScore * AppConstants.weightCrime) +
@@ -106,6 +112,20 @@ class SafetyScorer {
     return crimes.where((crime) {
       return GeoUtils.isPointNearRoute(
         crime.location,
+        points,
+        bufferMeters,
+      );
+    }).length;
+  }
+
+  int _countCollisionsNearRoute(
+    List<LatLng> points,
+    List<Collision> collisions,
+    double bufferMeters,
+  ) {
+    return collisions.where((collision) {
+      return GeoUtils.isPointNearRoute(
+        collision.location,
         points,
         bufferMeters,
       );

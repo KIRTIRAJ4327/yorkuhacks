@@ -1,0 +1,65 @@
+---
+alwaysApply: true
+---
+
+# SafePath York - Emergency Panic Mode Implementation
+
+## Tactical Panic Mode Flow
+
+When user activates SOS (tap or 2s hold):
+
+1. **Emergency Provider** ([emergency_provider.dart](mdc:lib/providers/emergency_provider.dart))
+   - Searches expanding radius: 3km → 5km → 10km
+   - Smart fallback if nothing found: 4× 24/7 stores + police + hospital
+   - Priority logic:
+     - **<1km**: Use CLOSEST (regardless of type)
+     - **>1km**: Prioritize Police > Hospital > Fire > 24/7 stores
+   - Routes to SHORTEST path (ignores safety score)
+   - Shares GPS coordinates
+
+2. **Emergency Screen** ([emergency_screen.dart](mdc:lib/presentation/screens/emergency_screen.dart))
+   - High-contrast black UI
+   - 180px rotating AR arrow pointing to safety
+   - 72px distance + ETA
+   - Background map shows ALL nearby safe harbors
+   - Pulsing 80px target marker on destination
+   - One-tap 911 button
+   - Auto-exits when arrived (<30m)
+
+## Google Places API Integration
+
+**Current Implementation:** Three parallel searches for:
+- Emergency services: `police`, `hospital`, `fire_station`
+- 24/7 stores: `gas_station`, `convenience_store` (filtered for isOpen24h)
+- Pharmacies: `pharmacy` (filtered for currently open)
+
+**Critical Fallback Logic:**
+If Google Places fails OR returns no results, uses intelligent fallback:
+- 2× Gas stations (24h) - ~500-600m away
+- 2× Convenience stores (24h) - ~400-700m away
+- 1× Police station - ~1.2km away
+- 1× Hospital - ~1.5km away
+
+**Rationale:** 24/7 stores (gas stations, 7-Eleven) are MORE COMMON than police stations in suburbs, making them better emergency destinations for most locations.
+
+## API Keys (Updated 2026-02-15)
+- Gemini: `AIzaSyBMY1AbJretL3J-yjJ2gHRnTS6tndzjl_k`
+- Google Places: `AIzaSyDn5_qvrP5mZO3K94dwyALTDldTiQK9kTQ`
+- Geocoding: `AIzaSyAuMZM90KKHZmSoYms8Hfa4TGzM68g_afc` (not yet integrated)
+
+**Note:** Google Places API key currently returns 403 Forbidden. To fix:
+1. Go to Google Cloud Console → APIs & Services
+2. Enable "Places API (New)" for key
+3. Wait 1-2 minutes for propagation
+
+## Testing Emergency Mode
+1. Run app: `.\run.bat` (Windows) or `./run.sh` (Unix)
+2. Tap SOS button (red circle, bottom-left on any screen)
+3. Select "Activate Panic Mode"
+4. Verify: Giant arrow appears, distance updates in real-time, map shows all nearby safe spaces
+
+## Known Issues
+- GPS coordinates "shared with authorities" is simulated (console log only)
+- Real implementation needs SMS API or platform-specific emergency broadcast
+- Google Places API key needs to be enabled in GCP
+

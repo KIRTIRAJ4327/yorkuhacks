@@ -20,25 +20,30 @@ class RouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: const Color(0xFF1E293B), // Lighter slate - more visible
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isSelected
-              ? route.type.color.withValues(alpha: 0.6)
-              : AppColors.border.withValues(alpha: 0.3),
-          width: isSelected ? 2 : 1,
+              ? route.type.color.withValues(alpha: 0.8)
+              : AppColors.border.withValues(alpha: 0.4),
+          width: isSelected ? 2.5 : 1.5,
         ),
-        boxShadow: isSelected
-            ? [
-                BoxShadow(
-                  color: route.type.color.withValues(alpha: 0.15),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+          if (isSelected)
+            BoxShadow(
+              color: route.type.color.withValues(alpha: 0.3),
+              blurRadius: 20,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),

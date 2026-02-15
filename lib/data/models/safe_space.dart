@@ -173,7 +173,7 @@ class SafeSpace {
   /// Create SafeSpace from Google Places API response
   factory SafeSpace.fromGooglePlaces(Map<String, dynamic> json) {
     final types = (json['types'] as List?)?.cast<String>() ?? [];
-    final location = json['location'] as Map<String, dynamic>;
+    final location = json['location'] as Map<String, dynamic>?;
     final openingHours = json['regularOpeningHours'] != null
         ? OpeningHours.fromGooglePlaces(
             json['regularOpeningHours'] as Map<String, dynamic>)
@@ -190,13 +190,18 @@ class SafeSpace {
       type = SafeSpaceType.pharmacy;
     }
 
+    // Safely extract location with defaults
+    final lat = location != null ? (location['latitude'] as num?)?.toDouble() : null;
+    final lng = location != null ? (location['longitude'] as num?)?.toDouble() : null;
+
+    if (lat == null || lng == null) {
+      throw FormatException('Google Places API returned invalid location data');
+    }
+
     return SafeSpace(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? 'place_${json['displayName']?['text']?.hashCode ?? DateTime.now().millisecondsSinceEpoch}',
       name: json['displayName']?['text'] as String? ?? type.label,
-      location: LatLng(
-        location['latitude'] as double,
-        location['longitude'] as double,
-      ),
+      location: LatLng(lat, lng),
       type: type,
       address: json['formattedAddress'] as String?,
       phone: json['internationalPhoneNumber'] as String?,

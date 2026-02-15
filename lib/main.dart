@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
 import 'data/local/cache_service.dart';
+import 'providers/route_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,11 +21,19 @@ void main() async {
 
   // Initialize Hive cache
   final cache = CacheService();
-  await cache.init();
+  try {
+    await cache.init();
+  } catch (e) {
+    print('Cache initialization failed: $e');
+    // Continue without cache - app will work with API calls only
+  }
 
   runApp(
-    const ProviderScope(
-      child: SafePathApp(),
+    ProviderScope(
+      overrides: [
+        cacheServiceProvider.overrideWithValue(cache),
+      ],
+      child: const SafePathApp(),
     ),
   );
 }
