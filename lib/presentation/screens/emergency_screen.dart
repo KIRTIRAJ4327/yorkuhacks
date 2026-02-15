@@ -28,6 +28,7 @@ class EmergencyScreen extends ConsumerStatefulWidget {
 class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
     with SingleTickerProviderStateMixin {
   final MapController _mapController = MapController();
+  final MapController _overlayMapController = MapController(); // Separate controller for overlay
   late AnimationController _pulseController;
 
   @override
@@ -111,53 +112,52 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen>
           // Pulsing highlight on TARGET safe harbor (on top of dimmed map)
           if (emergencyState.emergencyRoute != null && userPos != null)
             Positioned.fill(
-              child: FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  initialCenter: userPos,
-                  initialZoom: 16,
-                  interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.none, // Disable interaction on overlay
+              child: IgnorePointer( // Make overlay non-interactive
+                child: FlutterMap(
+                  mapController: _overlayMapController,
+                  options: MapOptions(
+                    initialCenter: userPos,
+                    initialZoom: 16,
                   ),
-                ),
-                children: [
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: target.location,
-                        width: 80,
-                        height: 80,
-                        child: AnimatedBuilder(
-                          animation: _pulseController,
-                          builder: (context, child) {
-                            final scale = 1.0 + _pulseController.value * 0.3;
-                            return Transform.scale(
-                              scale: scale,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.yellow.withValues(
-                                      alpha: 0.2 * (1 - _pulseController.value)),
-                                  border: Border.all(
+                  children: [
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: target.location,
+                          width: 80,
+                          height: 80,
+                          child: AnimatedBuilder(
+                            animation: _pulseController,
+                            builder: (context, child) {
+                              final scale = 1.0 + _pulseController.value * 0.3;
+                              return Transform.scale(
+                                scale: scale,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
                                     color: Colors.yellow.withValues(
-                                        alpha: 0.6 + _pulseController.value * 0.4),
-                                    width: 3,
+                                        alpha: 0.2 * (1 - _pulseController.value)),
+                                    border: Border.all(
+                                      color: Colors.yellow.withValues(
+                                          alpha: 0.6 + _pulseController.value * 0.4),
+                                      width: 3,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      target.type.emoji,
+                                      style: const TextStyle(fontSize: 32),
+                                    ),
                                   ),
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    target.type.emoji,
-                                    style: const TextStyle(fontSize: 32),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
 

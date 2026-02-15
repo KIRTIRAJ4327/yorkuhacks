@@ -198,9 +198,25 @@ class SafeSpace {
       throw FormatException('Google Places API returned invalid location data');
     }
 
+    // Safely extract display name - handle nested map or missing data
+    String placeName = type.label; // Default
+    final displayNameObj = json['displayName'];
+    if (displayNameObj != null && displayNameObj is Map) {
+      final text = displayNameObj['text'];
+      if (text != null && text is String && text.isNotEmpty) {
+        placeName = text;
+      }
+    }
+
+    // Safely extract ID
+    final placeId = json['id'];
+    final safeId = (placeId != null && placeId is String && placeId.isNotEmpty)
+        ? placeId
+        : 'place_${placeName.hashCode}_${lat.toStringAsFixed(4)}_${lng.toStringAsFixed(4)}';
+
     return SafeSpace(
-      id: json['id'] as String? ?? 'place_${json['displayName']?['text']?.hashCode ?? DateTime.now().millisecondsSinceEpoch}',
-      name: json['displayName']?['text'] as String? ?? type.label,
+      id: safeId,
+      name: placeName,
       location: LatLng(lat, lng),
       type: type,
       address: json['formattedAddress'] as String?,
